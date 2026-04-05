@@ -6,7 +6,7 @@ getMyNotifications,
 markAsRead
 } = require("../controllers/notificationController");
 
-const auth = require("../middleware/auth");
+const auth = require("../middleware/authMiddleware");
 
 router.get("/", auth, getMyNotifications);
 router.put("/:id/read", auth, markAsRead);

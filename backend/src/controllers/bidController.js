@@ -3,7 +3,7 @@ const Auction = require("../models/Auction");
 const Notification = require("../models/Notification");
 const Wallet = require("../models/Wallet");
 
-const io = require("../server");
+const { getSocket } = require("../utils/socket");
 
 exports.placeBid = async (req, res) => {
 try {
@@ -95,10 +95,13 @@ type: "BID"
 
 
 // realtime
-io.to(auctionId).emit("bidUpdate", {
-auctionId,
-amount
-});
+const io = getSocket();
+if (io) {
+  io.to(auctionId).emit("bidUpdate", {
+    auctionId,
+    amount
+  });
+}
 
 res.status(201).json({
 message: "Bid placed successfully",

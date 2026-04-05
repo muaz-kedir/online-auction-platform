@@ -1,16 +1,32 @@
 const Auction = require("../models/Auction");
-const Bid = require("../models/Bid");
 
-
-// Create Auction
 exports.createAuction = async (req, res) => {
 try {
 
-const auction = await Auction.create({
-...req.body,
+const images = req.files
+? req.files.map(file => file.path)
+: [];
+
+// Get startingBid from either field
+const startingBid = req.body.startingBid || req.body.startingPrice;
+
+// Build auction data - only include category if it's a valid ObjectId
+const auctionData = {
+title: req.body.title,
+description: req.body.description,
+startingBid: Number(startingBid),
+currentBid: Number(startingBid),
+endTime: req.body.endTime,
 seller: req.user._id,
-currentBid: req.body.startingPrice
-});
+images
+};
+
+// Only add category if it's a valid 24-character hex ObjectId
+if (req.body.category && /^[0-9a-fA-F]{24}$/.test(req.body.category)) {
+auctionData.category = req.body.category;
+}
+
+const auction = await Auction.create(auctionData);
 
 res.status(201).json(auction);
 
@@ -19,15 +35,35 @@ res.status(500).json({ error: error.message });
 }
 };
 
-
-// Get all auctions
 exports.getAuctions = async (req, res) => {
 try {
 
-const auctions = await Auction
-.find()
-.populate("seller", "name email")
-.populate("winner", "name email");
+const { search, category, min, max } = req.query;
+
+let filter = {};
+
+if (search) {
+filter.title = {
+$regex: search,
+$options: "i"
+};
+}
+
+if (category) {
+filter.category = category;
+}
+
+if (min || max) {
+filter.currentBid = {};
+
+if (min) filter.currentBid.$gte = min;
+if (max) filter.currentBid.$lte = max;
+}
+
+const auctions = await Auction.find(filter)
+.populate("seller")
+.populate("category")
+.sort({ createdAt: -1 });
 
 res.json(auctions);
 
@@ -36,31 +72,14 @@ res.status(500).json({ error: error.message });
 }
 };
 
-
-// Get single auction with bids + winner
-exports.getAuction = async (req, res) => {
+exports.getAuctionById = async (req, res) => {
 try {
 
-const auction = await Auction
-.findById(req.params.id)
-.populate("seller", "name email")
-.populate("winner", "name email");
+const auction = await Auction.findById(req.params.id)
+.populate("seller")
+.populate("category");
 
-if (!auction) {
-return res.status(404).json({
-message: "Auction not found"
-});
-}
-
-const bids = await Bid
-.find({ auction: req.params.id })
-.sort({ amount: -1 })
-.populate("bidder", "name email");
-
-res.json({
-auction,
-bids
-});
+res.json(auction);
 
 } catch (error) {
 res.status(500).json({ error: error.message });

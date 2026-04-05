@@ -7,16 +7,17 @@ type: String,
 required: true
 },
 
-description: {
-type: String,
-required: true
+description: String,
+
+images: [String],
+
+category: {
+type: mongoose.Schema.Types.ObjectId,
+ref: "Category",
+required: false
 },
 
-image: String,
-
-category: String,
-
-startingPrice: {
+startingBid: {
 type: Number,
 required: true
 },
@@ -26,50 +27,23 @@ type: Number,
 default: 0
 },
 
+seller: {
+type: mongoose.Schema.Types.ObjectId,
+ref: "User"
+},
+
 winner: {
 type: mongoose.Schema.Types.ObjectId,
 ref: "User"
 },
 
-seller: {
-type: mongoose.Schema.Types.ObjectId,
-ref: "User",
-required: true
-},
-
-startTime: {
-type: Date,
-required: true
-},
-
-endTime: {
-type: Date,
-required: true
-},
+endTime: Date,
 
 status: {
 type: String,
-enum: ["pending", "active", "ended"],
-default: "pending"
-},
-
-paymentStatus: {
-type: String,
-enum: ["pending", "paid", "released", "refunded"],
-default: "pending"
-},
-
-deliveryStatus: {
-type: String,
-enum: ["pending", "shipped", "delivered"],
-default: "pending"
-},
-
-dispute: {
-type: Boolean,
-default: false
+enum: ["ACTIVE", "ENDED"],
+default: "ACTIVE"
 }
-
 },
 { timestamps: true }
 );

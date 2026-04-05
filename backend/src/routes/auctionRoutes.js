@@ -4,20 +4,27 @@ const router = express.Router();
 const {
 createAuction,
 getAuctions,
-getAuction
+getAuctionById
 } = require("../controllers/auctionController");
 
-const protect = require("../middleware/authMiddleware");
-const authorize = require("../middleware/roleMiddleware");
+const auth = require("../middleware/authMiddleware");
+const upload = require("../middleware/upload");
 
 router.post(
 "/",
-protect,
-authorize("seller", "admin", "super_admin"),
+auth,
+(req, res, next) => {
+// If no files, skip upload middleware
+if (!req.headers['content-type']?.includes('multipart/form-data')) {
+return next();
+}
+upload.array("images", 5)(req, res, next);
+},
 createAuction
 );
 
 router.get("/", getAuctions);
-router.get("/:id", getAuction);
+
+router.get("/:id", getAuctionById);
 
 module.exports = router;

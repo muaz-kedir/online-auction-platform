@@ -3,15 +3,20 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
-const notificationRoutes = require("./routes/notificationRoutes");
+const notificationRoutes = require("./src/routes/notificationRoutes");
+const withdrawRoutes = require("./src/routes/withdrawRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+const auctionRoutes = require("./src/routes/auctionRoutes");
+const bidRoutes = require("./src/routes/bidRoutes");
+const paymentRoutes = require("./src/routes/paymentRoutes");
+const escrowRoutes = require("./src/routes/escrowRoutes");
+const walletRoutes = require("./src/routes/walletRoutes");
+const autoEndAuctions = require("./src/utils/auctionAutoEnd");
+const { initSocket } = require("./src/utils/socket");
+const categoryRoutes = require("./src/routes/categoryRoutes");
+const ratingRoutes = require("./src/routes/ratingRoutes");
+const disputeRoutes = require("./src/routes/disputeRoutes");
 
-const authRoutes = require("./routes/authRoutes");
-const auctionRoutes = require("./routes/auctionRoutes");
-const bidRoutes = require("./routes/bidRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
-const escrowRoutes = require("./routes/escrowRoutes");
-const walletRoutes = require("./routes/walletRoutes");
-const autoEndAuctions = require("./utils/auctionAutoEnd");
 
 const cron = require("node-cron");
 
@@ -26,7 +31,11 @@ app.use("/api/auctions", auctionRoutes);
 app.use("/api/bids", bidRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/escrow", escrowRoutes);
-
+app.use("/api/withdraw", withdrawRoutes);
+app.use("/uploads", express.static("uploads"));
+app.use("/api/categories", categoryRoutes);
+app.use("/api/ratings", ratingRoutes);
+app.use("/api/disputes", disputeRoutes);
 
 // MongoDB
 mongoose.connect(process.env.MONGO_URI)
@@ -57,6 +66,8 @@ origin: "*"
 }
 });
 
+initSocket(io);
+
 io.on("connection", (socket) => {
 
 console.log("User connected:", socket.id);
@@ -76,5 +87,3 @@ console.log("User disconnected");
 });
 
 });
-
-module.exports = io;

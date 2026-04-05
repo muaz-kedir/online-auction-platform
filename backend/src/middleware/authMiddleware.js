@@ -11,7 +11,7 @@ return res.status(401).json({ message: "Not authorized" });
 }
 
 // Remove Bearer prefix if present
-token = token.startsWith("Bearer ") ? token.slice(7) : token;
+token = token.startsWith("Bearer ") ? token.slice(7).trim() : token.trim();
 
 const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

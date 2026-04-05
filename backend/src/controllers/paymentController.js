@@ -1,46 +1,63 @@
 const Auction = require("../models/Auction");
+const Wallet = require("../models/Wallet");
+const Notification = require("../models/Notification");
 
 
-// Winner pays
-exports.payAuction = async (req, res) => {
+// release winner payment
+exports.releasePayment = async (req, res) => {
 try {
 
-const auction = await Auction.findById(req.params.id);
+const auctionId = req.params.id;
+
+const auction = await Auction.findById(auctionId);
 
 if (!auction) {
-return res.status(404).json({
-message: "Auction not found"
-});
+return res.status(404).json({ message: "Auction not found" });
 }
 
-// must be ended
-if (auction.status !== "ended") {
+if (!auction.winner) {
 return res.status(400).json({
-message: "Auction not ended yet"
+message: "Auction has no winner"
 });
 }
 
-// only winner can pay
-if (auction.winner.toString() !== req.user._id.toString()) {
-return res.status(403).json({
-message: "Only winner can pay"
+const winnerWallet = await Wallet.findOne({
+user: auction.winner
 });
-}
 
-// already paid
-if (auction.paymentStatus === "paid") {
-return res.status(400).json({
-message: "Already paid"
+const sellerWallet = await Wallet.findOne({
+user: auction.seller
 });
-}
 
-auction.paymentStatus = "paid";
+const amount = auction.currentBid;
 
-await auction.save();
+// admin fee 5%
+const adminFee = amount * 0.05;
+const sellerAmount = amount - adminFee;
+
+
+// deduct from held
+winnerWallet.heldBalance -= amount;
+await winnerWallet.save();
+
+
+// pay seller
+sellerWallet.balance += sellerAmount;
+sellerWallet.totalEarnings += sellerAmount;
+await sellerWallet.save();
+
+
+// notify
+await Notification.create({
+user: auction.seller,
+message: "Payment received from auction winner",
+type: "PAYMENT"
+});
 
 res.json({
-message: "Payment successful",
-auction
+message: "Payment released",
+sellerAmount,
+adminFee
 });
 
 } catch (error) {

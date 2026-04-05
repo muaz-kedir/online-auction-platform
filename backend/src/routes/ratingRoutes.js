@@ -2,13 +2,13 @@ const express = require("express");
 const router = express.Router();
 
 const {
-getMyWallet,
-deposit
-} = require("../controllers/walletController");
+addRating,
+getSellerRatings
+} = require("../controllers/ratingController");
 
 const auth = require("../middleware/authMiddleware");
 
-router.get("/", auth, getMyWallet);
-router.post("/deposit", auth, deposit);
+router.post("/", auth, addRating);
+router.get("/:id", getSellerRatings);
 
 module.exports = router;
